@@ -35,21 +35,24 @@ pub enum FakeRelayRequest {
     SendToAddress {
         addr: &Address,
         satoshis: u64,
-        response: Result<btc::Transaction, failure::Error>,
     },
     TransactionInfo {
         id: &Hash,
-        response: Result<Option<BtcTransactionInfo>, failure::Error>,
     },
     SendTransaction {
         transaction: &btc::Transaction,
-        response: Result<Hash, failure::Error>,
     },
     WatchAddress {
         addr: &Address,
         rescan: bool,
-        response: Result<(), failure::Error>,
     },
+}
+
+pub enum FakeRelayResponse {
+    SendToAddress(Result<btc::Transaction, failure::Error>),
+    TransactionInfo(Result<Option<BtcTransactionInfo>, failure::Error>),
+    SendTransaction(Result<Hash, failure::Error>),
+    WatchAddress(Result<(), failure::Error>),
 }
 
 struct FakeBtcRelay;
