@@ -55,6 +55,71 @@ pub enum FakeRelayResponse {
     WatchAddress(Result<(), failure::Error>),
 }
 
+
+#[derive(Debug, Clone, Default)]
+pub struct TestRequests(Arc<Mutex<VecDeque<(FakeRelayRequest, FakeRelayResponse)>>>);
+
+impl TestRequests {
+    pub fn new() -> TestRequests {
+        TestRequests(Arc::new(Mutex::new(VecDeque::new())))
+    }
+
+    pub fn expect<I: IntoIterator<Item = (FakeRelayRequest, FakeRelayResponse)>>(&self, requests: I) {
+        self.0.lock().unwrap().extend(requests);
+    }
+}
+
+// -
+// -#[derive(Debug)]
+// -pub struct FakeBitcoinRpcClient {
+// -    pub requests: TestRequests,
+// -    rpc: BitcoinRpcConfig,
+// -}
+// -
+// -impl FakeBitcoinRpcClient {
+// -    pub fn new() -> Self {
+// -        Self {
+// -            requests: TestRequests::new(),
+// -            rpc: BitcoinRpcConfig {
+// -                host: String::from("http://127.0.0.1:1234"),
+// -                username: None,
+// -                password: None,
+// -            },
+// -        }
+// -    }
+// -
+// -    fn request<T, P>(&self, method: &str, params: P) -> bitcoin_rpc::Result<T>
+// -    where
+// -        T: ::std::fmt::Debug,
+// -        P: AsRef<bitcoin_rpc::Params>,
+// -        for<'de> T: Deserialize<'de>,
+// -    {
+// -        let params = params.as_ref();
+// -        let expected = self.requests.0.lock().unwrap().pop_front().expect(
+// -            format!(
+// -                "expected response for method={}, \
+// -                 params={:#?}",
+// -                method, params
+// -            ).as_str(),
+// -        );
+// -
+// -        assert_eq!(expected.method, method);
+// -        assert_eq!(
+// -            &expected.params, params,
+// -            "Invalid params for method {}!",
+// -            method
+// -        );
+// -
+// -        let response = expected.response?;
+// -        trace!(
+// -            "method: {}, params={:?}, response={:#}",
+// -            method,
+// -            params,
+// -            response
+// -        );
+// -        from_value(response).map_err(|e| bitcoin_rpc::Error::Rpc(bitcoin_rpc::RpcError::Json(e)))
+// -    }
+
 struct FakeBtcRelay;
 
 impl BtcRelay for FakeBtcRelay {
