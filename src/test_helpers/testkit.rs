@@ -165,35 +165,35 @@ impl AnchoringTestKit {
     ) -> Self {
         let seed: &[_] = &[1, 2, 3, 9];
         let rng: StdRng = SeedableRng::from_seed(seed);
-        let fake_client = fake_rpc::FakeBitcoinRpcClient::new();
-        let requests = fake_client.requests.clone();
+        let fake_relay = fake_rpc::FakeBtcRelay::default();
+        let requests = fake_relay.requests.clone();
 
         requests.expect(vec![
-            request! {
-                method: "sendtoaddress",
-                params: ["tb1q8270svuaqety59gegtp4ujjeam39s83csz7whp9ryn3zxlcee66setkyq0", "0.00007"],
-                response: "69ef1d6847712089783bf861342568625e1e4a499993f27e10d9bb5f259d0894"
-            },
-            request! {
-                method: "getrawtransaction",
-                params: [
-                    "69ef1d6847712089783bf861342568625e1e4a499993f27e10d9bb5f259d0894",
-                    0
-                ],
-                response: "02000000000101140b3f5da041f173d938b8fe778d39cb2ef801f75f\
-                           2946e490e34d6bb47bb9ce0000000000feffffff0230025400000000\
-                           00160014169fa44a9159f281122bb7f3d43d88d56dfa937e70110100\
-                           000000002200203abcf8339d06564a151942c35e4a59eee2581e3880\
-                           bceb84a324e2237f19ceb502483045022100e91d46b565f26641b353\
-                           591d0c403a05ada5735875fb0f055538bf9df4986165022044b53367\
-                           72de8c5f6cbf83bcc7099e31d7dce22ba1f3d1badc2fdd7f8013a122\
-                           01210254053f15b44b825bc5dabfe88f8b94cd217372f3f297d2696a\
-                           32835b43497397358d1400"
-            },
+            // request! {
+            //     method: "sendtoaddress",
+            //     params: ["tb1q8270svuaqety59gegtp4ujjeam39s83csz7whp9ryn3zxlcee66setkyq0", "0.00007"],
+            //     response: "69ef1d6847712089783bf861342568625e1e4a499993f27e10d9bb5f259d0894"
+            // },
+            // request! {
+            //     method: "getrawtransaction",
+            //     params: [
+            //         "69ef1d6847712089783bf861342568625e1e4a499993f27e10d9bb5f259d0894",
+            //         0
+            //     ],
+            //     response: "02000000000101140b3f5da041f173d938b8fe778d39cb2ef801f75f\
+            //                2946e490e34d6bb47bb9ce0000000000feffffff0230025400000000\
+            //                00160014169fa44a9159f281122bb7f3d43d88d56dfa937e70110100\
+            //                000000002200203abcf8339d06564a151942c35e4a59eee2581e3880\
+            //                bceb84a324e2237f19ceb502483045022100e91d46b565f26641b353\
+            //                591d0c403a05ada5735875fb0f055538bf9df4986165022044b53367\
+            //                72de8c5f6cbf83bcc7099e31d7dce22ba1f3d1badc2fdd7f8013a122\
+            //                01210254053f15b44b825bc5dabfe88f8b94cd217372f3f297d2696a\
+            //                32835b43497397358d1400"
+            // },
         ]);
 
         Self::new(
-            Box::from(fake_client),
+            Box::from(fake_relay),
             validators_num,
             total_funds,
             anchoring_interval,

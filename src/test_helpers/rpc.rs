@@ -31,30 +31,21 @@ use exonum::encoding::serialize::FromHex;
 
 use rpc::{BitcoinRpcConfig, BtcRelay, TransactionInfo as BtcTransactionInfo};
 
+#[derive(Debug)]
 pub enum FakeRelayRequest {
-    SendToAddress {
-        addr: &Address,
-        satoshis: u64,
-    },
-    TransactionInfo {
-        id: &Hash,
-    },
-    SendTransaction {
-        transaction: &btc::Transaction,
-    },
-    WatchAddress {
-        addr: &Address,
-        rescan: bool,
-    },
+    SendToAddress { addr: Address, satoshis: u64 },
+    TransactionInfo { id: Hash },
+    SendTransaction { transaction: btc::Transaction },
+    WatchAddress { addr: Address, rescan: bool },
 }
 
+#[derive(Debug)]
 pub enum FakeRelayResponse {
     SendToAddress(Result<btc::Transaction, failure::Error>),
     TransactionInfo(Result<Option<BtcTransactionInfo>, failure::Error>),
     SendTransaction(Result<Hash, failure::Error>),
     WatchAddress(Result<(), failure::Error>),
 }
-
 
 #[derive(Debug, Clone, Default)]
 pub struct TestRequests(Arc<Mutex<VecDeque<(FakeRelayRequest, FakeRelayResponse)>>>);
@@ -64,7 +55,10 @@ impl TestRequests {
         TestRequests(Arc::new(Mutex::new(VecDeque::new())))
     }
 
-    pub fn expect<I: IntoIterator<Item = (FakeRelayRequest, FakeRelayResponse)>>(&self, requests: I) {
+    pub fn expect<I: IntoIterator<Item = (FakeRelayRequest, FakeRelayResponse)>>(
+        &self,
+        requests: I,
+    ) {
         self.0.lock().unwrap().extend(requests);
     }
 }
@@ -119,8 +113,27 @@ impl TestRequests {
 // -        );
 // -        from_value(response).map_err(|e| bitcoin_rpc::Error::Rpc(bitcoin_rpc::RpcError::Json(e)))
 // -    }
+#[derive(Debug, Default)]
+pub struct FakeBtcRelay {
+    pub requests: TestRequests,
+    rpc: BitcoinRpcConfig,
+}
 
-struct FakeBtcRelay;
+impl FakeBtcRelay {
+    fn request(&self, request: FakeRelayRequest) -> FakeRelayResponse {
+        let (expected_request, response) = self.requests
+            .0
+            .lock()
+            .unwrap()
+            .pop_front()
+            .expect(format!("expected request {:?}", request).as_str());
+
+        assert_matches!(request, expected_request);
+
+        trace!("request: {:?}, response={:?}", expected_request, response);
+        response
+    }
+}
 
 impl BtcRelay for FakeBtcRelay {
     fn send_to_address(
@@ -128,14 +141,47 @@ impl BtcRelay for FakeBtcRelay {
         addr: &Address,
         satoshis: u64,
     ) -> Result<btc::Transaction, failure::Error> {
-
+        if let FakeRelayResponse::SendToAddress(r) = self.request(FakeRelayRequest::SendToAddress {
+            addr: addr.clone(),
+            satoshis,
+        }) {
+            r
+        } else {
+            panic!();
+        }
     }
 
-    fn transaction_info(&self, id: &Hash) -> Result<Option<BtcTransactionInfo>, failure::Error> {}
+    fn transaction_info(&self, id: &Hash) -> Result<Option<BtcTransactionInfo>, failure::Error> {
+        if let FakeRelayResponse::TransactionInfo(r) =
+            self.request(FakeRelayRequest::TransactionInfo { id: *id })
+        {
+            r
+        } else {
+            panic!();
+        }
+    }
 
-    fn send_transaction(&self, transaction: &btc::Transaction) -> Result<Hash, failure::Error> {}
+    fn send_transaction(&self, transaction: &btc::Transaction) -> Result<Hash, failure::Error> {
+        if let FakeRelayResponse::SendTransaction(r) =
+            self.request(FakeRelayRequest::SendTransaction {
+                transaction: transaction.clone(),
+            }) {
+            r
+        } else {
+            panic!();
+        }
+    }
 
-    fn watch_address(&self, addr: &Address, rescan: bool) -> Result<(), failure::Error> {}
+    fn watch_address(&self, addr: &Address, rescan: bool) -> Result<(), failure::Error> {
+        if let FakeRelayResponse::WatchAddress(r) = self.request(FakeRelayRequest::WatchAddress {
+            addr: addr.clone(),
+            rescan,
+        }) {
+            r
+        } else {
+            panic!();
+        }
+    }
 
     fn config(&self) -> BitcoinRpcConfig {
         self.rpc.clone()
