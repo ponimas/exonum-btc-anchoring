@@ -30,10 +30,10 @@ use exonum::helpers::Height;
 use exonum_btc_anchoring::blockchain::BtcAnchoringSchema;
 use exonum_btc_anchoring::btc::Transaction;
 use exonum_btc_anchoring::rpc::TransactionInfo as BtcTransactionInfo;
-use exonum_btc_anchoring::test_helpers::rpc::{FakeRelayRequest, FakeRelayResponse};
+use exonum_btc_anchoring::test_helpers::rpc::{FakeRelayRequest, FakeRelayResponse, TestRequest};
 use exonum_btc_anchoring::test_helpers::testkit::AnchoringTestKit;
 
-fn funding_tx_request() -> (FakeRelayRequest, FakeRelayResponse) {
+fn funding_tx_request() -> TestRequest {
     (
         FakeRelayRequest::TransactionInfo {
             id: Hash::from_hex("69ef1d6847712089783bf861342568625e1e4a499993f27e10d9bb5f259d0894")

@@ -47,18 +47,17 @@ pub enum FakeRelayResponse {
     WatchAddress(Result<(), failure::Error>),
 }
 
+pub type TestRequest = (FakeRelayRequest, FakeRelayResponse);
+
 #[derive(Debug, Clone, Default)]
-pub struct TestRequests(Arc<Mutex<VecDeque<(FakeRelayRequest, FakeRelayResponse)>>>);
+pub struct TestRequests(Arc<Mutex<VecDeque<TestRequest>>>);
 
 impl TestRequests {
     pub fn new() -> TestRequests {
         TestRequests(Arc::new(Mutex::new(VecDeque::new())))
     }
 
-    pub fn expect<I: IntoIterator<Item = (FakeRelayRequest, FakeRelayResponse)>>(
-        &self,
-        requests: I,
-    ) {
+    pub fn expect(&self, requests: impl IntoIterator<Item = TestRequest>) {
         self.0.lock().unwrap().extend(requests);
     }
 }
